@@ -319,3 +319,58 @@ func (c *Client) SetTimeout(timeout time.Duration) {
 func (c *Client) GetConfig() *config.Config {
 	return c.config
 }
+
+// CreateSession creates a new VAPI session for the given assistant
+func (c *Client) CreateSession(ctx context.Context, assistantID string) (*SessionResponse, error) {
+	if assistantID == "" {
+		return nil, fmt.Errorf("assistantID is required")
+	}
+
+	// Create session request payload
+	sessionRequest := map[string]string{
+		"assistantId": assistantID,
+	}
+
+	// Marshal request to JSON
+	jsonData, err := json.Marshal(sessionRequest)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal session request: %w", err)
+	}
+
+	// Create HTTP request
+	url := fmt.Sprintf("%s/session", c.config.VAPI.BaseURL)
+	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	// Set headers
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Authorization", "Bearer "+c.config.VAPI.APIToken)
+
+	// Send request
+	resp, err := c.httpClient.Do(httpReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Read response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	// Check for HTTP errors
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
+	}
+
+	// Parse response
+	var sessionResponse SessionResponse
+	if err := json.Unmarshal(body, &sessionResponse); err != nil {
+		return nil, fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	return &sessionResponse, nil
+}

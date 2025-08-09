@@ -527,3 +527,14 @@ type KeypadInputPlan struct {
 	TimeoutSeconds *int    `json:"timeoutSeconds,omitempty"`
 	Delimiters     *string `json:"delimiters,omitempty"`
 }
+
+// Session-related types for VAPI session management
+
+// SessionResponse represents the response from creating or retrieving a session
+type SessionResponse struct {
+	ID          string `json:"id"`
+	OrgID       string `json:"orgId"`
+	AssistantID string `json:"assistantId"`
+	CreatedAt   string `json:"createdAt"`
+	UpdatedAt   string `json:"updatedAt"`
+}
